@@ -1,10 +1,13 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// подгоняем под размер окна
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// изображения
+// =====================
+// 1. Изображения
+// =====================
 const bg = new Image();
 bg.src = "background.png"; // фон коридора
 
@@ -14,41 +17,52 @@ grandmaImg.src = "grandma.png"; // бабушка
 const bookImg = new Image();
 bookImg.src = "book.png"; // книги
 
-// полосы
+// =====================
+// 2. Полосы движения
+// =====================
 const lanes = [
-  canvas.width / 2 - 200,
-  canvas.width / 2,
-  canvas.width / 2 + 200
+  canvas.width / 2 - 200, // левая
+  canvas.width / 2,       // центральная
+  canvas.width / 2 + 200  // правая
 ];
 
-// бабушка
+// =====================
+// 3. Бабушка
+// =====================
 const grandma = {
   lane: 1,
   x: lanes[1] - 40,
   y: canvas.height - 160,
   width: 80,
   height: 120,
-  targetX: lanes[1] - 40,
-  speedX: 15
+  targetX: lanes[1] - 40, // цель по X для плавного движения
+  speedX: 15              // скорость движения в px за кадр
 };
 
-let speed = 5;
+// =====================
+// 4. Игровые переменные
+// =====================
+let speed = 5;       // скорость книг/игры
 let score = 0;
 let books = [];
 let gameOver = false;
 
-// создание книги
+// =====================
+// 5. Создание книги
+// =====================
 function spawnBook() {
   const lane = Math.floor(Math.random() * 3);
   books.push({
-    lane,
+    lane: lane,
     x: lanes[lane] - 25,
     y: -60,
     size: 50
   });
 }
 
-// управление
+// =====================
+// 6. Управление клавишами
+// =====================
 document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft" && grandma.lane > 0) {
     grandma.lane--;
@@ -60,7 +74,9 @@ document.addEventListener("keydown", e => {
   }
 });
 
-// обновление
+// =====================
+// 7. Обновление состояния игры
+// =====================
 function update() {
   if (gameOver) return;
 
@@ -74,30 +90,37 @@ function update() {
     if (grandma.x < grandma.targetX) grandma.x = grandma.targetX;
   }
 
-  // движение книг и проверка столкновения
-  books.forEach(book => {
+  // движение книг и проверка сбора
+  books.forEach((book, i) => {
     book.y += speed;
 
+    // сбор книги
     if (
       book.lane === grandma.lane &&
       book.y + book.size > grandma.y &&
       book.y < grandma.y + grandma.height
     ) {
       score++;
-      document.getElementById("score").textContent = score;
-      book.y = canvas.height + 100; // убрать книгу после сбора
+      document.getElementById("score").textContent = "Счёт: " + score;
+      books.splice(i, 1); // удаляем собранную книгу
+    }
+
+    // удаляем книги за пределами экрана
+    if (book.y > canvas.height + 100) {
+      books.splice(i, 1);
     }
   });
 
-  books = books.filter(b => b.y < canvas.height + 100);
-
-  // шанс появления новой книги
+  // случайная генерация новых книг
   if (Math.random() < 0.02) spawnBook();
 
-  speed += 0.0005; // плавное ускорение игры
+  // плавное ускорение игры
+  speed += 0.0005;
 }
 
-// отрисовка
+// =====================
+// 8. Отрисовка
+// =====================
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
@@ -115,11 +138,14 @@ function draw() {
   });
 }
 
-// игровой цикл
+// =====================
+// 9. Игровой цикл
+// =====================
 function loop() {
   update();
   draw();
   requestAnimationFrame(loop);
 }
 
+// запускаем игру
 loop();
