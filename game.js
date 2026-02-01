@@ -1,11 +1,12 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// установка размера
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 // =====================
-// Изображения
+// изображения
 // =====================
 const bg = new Image();
 bg.src = "background.png";
@@ -17,7 +18,7 @@ const bookImg = new Image();
 bookImg.src = "book.png";
 
 // =====================
-// Полосы
+// полосы движения
 // =====================
 const lanes = [
   canvas.width / 2 - 200,
@@ -26,7 +27,7 @@ const lanes = [
 ];
 
 // =====================
-// Бабушка
+// бабушка
 // =====================
 const grandma = {
   lane: 1,
@@ -35,24 +36,20 @@ const grandma = {
   width: 80,
   height: 120,
   targetX: lanes[1] - 40,
-  speedX: 10 // уменьшил для плавного движения
+  speedX: 10
 };
 
-// =====================
-// Переменные игры
-// =====================
 let speed = 5;
 let score = 0;
 let books = [];
-let gameOver = false;
 
 // =====================
-// Создание книги
+// создание книги
 // =====================
 function spawnBook() {
   const lane = Math.floor(Math.random() * 3);
   books.push({
-    lane: lane,
+    lane,
     x: lanes[lane] - 25,
     y: -60,
     size: 50
@@ -60,21 +57,21 @@ function spawnBook() {
 }
 
 // =====================
-// Управление клавишами
+// клавиатура
 // =====================
 document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft" && grandma.lane > 0) {
     grandma.lane--;
-    grandma.targetX = lanes[grandma.lane] - grandma.width / 2;
+    grandma.targetX = lanes[grandma.lane] - grandma.width/2;
   }
   if (e.key === "ArrowRight" && grandma.lane < 2) {
     grandma.lane++;
-    grandma.targetX = lanes[grandma.lane] - grandma.width / 2;
+    grandma.targetX = lanes[grandma.lane] - grandma.width/2;
   }
 });
 
 // =====================
-// Управление свайпами
+// свайпы для мобильного
 // =====================
 let touchStartX = 0;
 let touchStartY = 0;
@@ -83,51 +80,42 @@ canvas.addEventListener("touchstart", e => {
   const touch = e.touches[0];
   touchStartX = touch.clientX;
   touchStartY = touch.clientY;
-}, false);
+});
 
 canvas.addEventListener("touchend", e => {
   const touch = e.changedTouches[0];
   const dx = touch.clientX - touchStartX;
   const dy = touch.clientY - touchStartY;
 
-  const absX = Math.abs(dx);
-  const absY = Math.abs(dy);
-
-  if (absX > absY) {
-    // горизонтальный свайп
+  if (Math.abs(dx) > Math.abs(dy)) {
     if (dx > 30 && grandma.lane < 2) {
       grandma.lane++;
-      grandma.targetX = lanes[grandma.lane] - grandma.width / 2;
+      grandma.targetX = lanes[grandma.lane] - grandma.width/2;
     }
     if (dx < -30 && grandma.lane > 0) {
       grandma.lane--;
-      grandma.targetX = lanes[grandma.lane] - grandma.width / 2;
+      grandma.targetX = lanes[grandma.lane] - grandma.width/2;
     }
   }
-  // вертикальные свайпы можно добавить для прыжка/скольжения
-}, false);
+});
 
 // =====================
-// Обновление
+// обновление
 // =====================
 function update() {
-  if (gameOver) return;
-
-  // Плавное движение бабушки к targetX
   if (grandma.x < grandma.targetX) {
     grandma.x += grandma.speedX;
     if (grandma.x > grandma.targetX) grandma.x = grandma.targetX;
-  } else if (grandma.x > grandma.targetX) {
+  }
+  if (grandma.x > grandma.targetX) {
     grandma.x -= grandma.speedX;
     if (grandma.x < grandma.targetX) grandma.x = grandma.targetX;
   }
 
-  // Движение книг
   for (let i = books.length - 1; i >= 0; i--) {
     const book = books[i];
     book.y += speed;
 
-    // Сбор книги
     if (
       book.lane === grandma.lane &&
       book.y + book.size > grandma.y &&
@@ -141,27 +129,18 @@ function update() {
     }
   }
 
-  // Генерация новых книг
   if (Math.random() < 0.02) spawnBook();
-
-  // Плавное ускорение
   speed += 0.0005;
 }
 
 // =====================
-// Отрисовка
+// рисуем всё
 // =====================
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
-  ctx.drawImage(
-    grandmaImg,
-    grandma.x,
-    grandma.y,
-    grandma.width,
-    grandma.height
-  );
+  ctx.drawImage(grandmaImg, grandma.x, grandma.y, grandma.width, grandma.height);
 
   books.forEach(book => {
     ctx.drawImage(bookImg, book.x, book.y, book.size, book.size);
@@ -169,7 +148,7 @@ function draw() {
 }
 
 // =====================
-// Цикл игры
+// игровой цикл
 // =====================
 function loop() {
   update();
@@ -177,7 +156,4 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-// =====================
-// Запуск
-// =====================
 loop();
