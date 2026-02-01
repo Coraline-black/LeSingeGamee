@@ -6,13 +6,13 @@ canvas.height = window.innerHeight;
 
 // изображения
 const bg = new Image();
-bg.src = "background.png";
+bg.src = "background.png"; // фон коридора
 
 const grandmaImg = new Image();
-grandmaImg.src = "grandma.png";
+grandmaImg.src = "grandma.png"; // бабушка
 
 const bookImg = new Image();
-bookImg.src = "book.png";
+bookImg.src = "book.png"; // книги
 
 // полосы
 const lanes = [
@@ -27,7 +27,9 @@ const grandma = {
   x: lanes[1] - 40,
   y: canvas.height - 160,
   width: 80,
-  height: 120
+  height: 120,
+  targetX: lanes[1] - 40,
+  speedX: 15
 };
 
 let speed = 5;
@@ -35,7 +37,7 @@ let score = 0;
 let books = [];
 let gameOver = false;
 
-// создание учебника
+// создание книги
 function spawnBook() {
   const lane = Math.floor(Math.random() * 3);
   books.push({
@@ -48,20 +50,34 @@ function spawnBook() {
 
 // управление
 document.addEventListener("keydown", e => {
-  if (e.key === "ArrowLeft" && grandma.lane > 0) grandma.lane--;
-  if (e.key === "ArrowRight" && grandma.lane < 2) grandma.lane++;
+  if (e.key === "ArrowLeft" && grandma.lane > 0) {
+    grandma.lane--;
+    grandma.targetX = lanes[grandma.lane] - grandma.width / 2;
+  }
+  if (e.key === "ArrowRight" && grandma.lane < 2) {
+    grandma.lane++;
+    grandma.targetX = lanes[grandma.lane] - grandma.width / 2;
+  }
 });
 
 // обновление
 function update() {
   if (gameOver) return;
 
-  grandma.x = lanes[grandma.lane] - grandma.width / 2;
+  // плавное движение бабушки
+  if (grandma.x < grandma.targetX) {
+    grandma.x += grandma.speedX;
+    if (grandma.x > grandma.targetX) grandma.x = grandma.targetX;
+  }
+  if (grandma.x > grandma.targetX) {
+    grandma.x -= grandma.speedX;
+    if (grandma.x < grandma.targetX) grandma.x = grandma.targetX;
+  }
 
+  // движение книг и проверка столкновения
   books.forEach(book => {
     book.y += speed;
 
-    // столкновение
     if (
       book.lane === grandma.lane &&
       book.y + book.size > grandma.y &&
@@ -69,19 +85,21 @@ function update() {
     ) {
       score++;
       document.getElementById("score").textContent = score;
-      book.y = canvas.height + 100;
+      book.y = canvas.height + 100; // убрать книгу после сбора
     }
   });
 
   books = books.filter(b => b.y < canvas.height + 100);
 
+  // шанс появления новой книги
   if (Math.random() < 0.02) spawnBook();
 
-  speed += 0.0005;
+  speed += 0.0005; // плавное ускорение игры
 }
 
 // отрисовка
 function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
   ctx.drawImage(
