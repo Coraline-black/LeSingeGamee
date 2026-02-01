@@ -1,7 +1,6 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// подгоняем под размер окна
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
@@ -75,7 +74,41 @@ document.addEventListener("keydown", e => {
 });
 
 // =====================
-// 7. Обновление состояния игры
+// 7. Управление свайпами
+// =====================
+let touchStartX = 0;
+let touchStartY = 0;
+
+canvas.addEventListener("touchstart", function(e){
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+}, false);
+
+canvas.addEventListener("touchend", function(e){
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - touchStartX;
+    const dy = touch.clientY - touchStartY;
+
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+
+    if(absX > absY){ 
+        // горизонтальный свайп
+        if(dx > 30 && grandma.lane < 2){ // вправо
+            grandma.lane++;
+            grandma.targetX = lanes[grandma.lane] - grandma.width/2;
+        }
+        if(dx < -30 && grandma.lane > 0){ // влево
+            grandma.lane--;
+            grandma.targetX = lanes[grandma.lane] - grandma.width/2;
+        }
+    }
+    // вертикальные свайпы можно добавить для прыжка/скольжения
+}, false);
+
+// =====================
+// 8. Обновление состояния игры
 // =====================
 function update() {
   if (gameOver) return;
@@ -91,7 +124,8 @@ function update() {
   }
 
   // движение книг и проверка сбора
-  books.forEach((book, i) => {
+  for (let i = books.length - 1; i >= 0; i--) {
+    let book = books[i];
     book.y += speed;
 
     // сбор книги
@@ -103,13 +137,10 @@ function update() {
       score++;
       document.getElementById("score").textContent = "Счёт: " + score;
       books.splice(i, 1); // удаляем собранную книгу
+    } else if (book.y > canvas.height + 100) {
+      books.splice(i, 1); // удаляем книги за пределами экрана
     }
-
-    // удаляем книги за пределами экрана
-    if (book.y > canvas.height + 100) {
-      books.splice(i, 1);
-    }
-  });
+  }
 
   // случайная генерация новых книг
   if (Math.random() < 0.02) spawnBook();
@@ -119,7 +150,7 @@ function update() {
 }
 
 // =====================
-// 8. Отрисовка
+// 9. Отрисовка
 // =====================
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -139,7 +170,7 @@ function draw() {
 }
 
 // =====================
-// 9. Игровой цикл
+// 10. Игровой цикл
 // =====================
 function loop() {
   update();
@@ -147,5 +178,7 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-// запускаем игру
+// =====================
+// 11. Запуск игры
+// =====================
 loop();
